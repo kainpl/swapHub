@@ -34,7 +34,10 @@
 ### 4. Опції
 
 - **Disable Mech Mode fast check** — прибирає перевірку мех-моду між плейтами, залишаючи тільки стартову
+  - **Повністю (включаючи першу)** — прибирає перевірку з усіх плейтів, включаючи перший
 - **Disable Dynamic Flow Calibration** — відключає повторну калібрацію потоку між плейтами
+
+> Для роботи цих опцій G-code у слайсері повинен містити спеціальні маркери (`MMFC`, `DFC`, `FIN`). Деталі — у вбудованому Setup Guide.
 
 ### 5. Генеруй і друкуй
 
@@ -86,15 +89,29 @@ npm run electron:build:linux    # Linux (.AppImage)
 src/                             # React-код (спільний для web і desktop)
 ├── App.jsx                      # Головний компонент, весь стейт
 ├── index.css                    # Tailwind, CSS-змінні, шрифти
+├── main.jsx                     # Entry point React
 ├── components/
 │   ├── DropZone.jsx             # Drag-and-drop зона (звичайна + express)
+│   ├── GuideModal.jsx           # Модальне вікно з Setup Guide (markdown)
+│   ├── LangSwitcher.jsx         # Перемикач мови (UK/EN)
 │   ├── PlateCard.jsx            # Картка пластини (draggable, toggle, repeats)
 │   ├── PlateGallery.jsx         # Галерея thumbnail для вибору обкладинки
 │   ├── PrintQueue.jsx           # Візуалізація черги друку
-│   └── Stats.jsx                # Статистика часу та філаменту
+│   ├── Stats.jsx                # Статистика часу та філаменту
+│   └── ThemeSwitcher.jsx        # Перемикач теми (dark/light)
+├── docs/
+│   ├── setup-guide.uk.md        # Setup Guide (українська)
+│   └── setup-guide.en.md        # Setup Guide (англійська)
+├── i18n/
+│   ├── index.jsx                # i18n провайдер і хук useI18n
+│   ├── uk.js                    # Переклади — українська
+│   └── en.js                    # Переклади — англійська
+├── theme/
+│   └── index.jsx                # Провайдер теми (dark/light)
 ├── utils/
 │   ├── parse3mf.js              # Парсинг 3MF (slice_info + model_settings)
-│   └── generate.js              # Генерація .swap.3mf з gcode-склейкою
+│   ├── generate.js              # Генерація .swap.3mf з gcode-склейкою
+│   └── generateController.js    # Контролер генерації (pause/resume/stop)
 electron/
 │   └── main.js                  # Electron entry point
 electron-builder.json            # Конфіг пакування desktop-версії
@@ -111,7 +128,10 @@ docs/
 - **JSZip** — читання і створення `.3mf` (ZIP-архівів)
 - **SparkMD5** — MD5 хеш для gcode
 - **@dnd-kit** — drag & drop для сортування пластин
-- **Electron** — десктопна обгортка (опціонально)
+- **sonner** — toast-нотифікації
+- **marked** — рендеринг Markdown (вбудований Setup Guide)
+- **Electron 41** — десктопна обгортка (опціонально)
+- **electron-builder** — пакування інсталяторів (win/mac/linux)
 
 ---
 
