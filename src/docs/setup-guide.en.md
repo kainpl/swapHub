@@ -78,9 +78,11 @@ The generated `.swap.3mf` contains a single merged G-code file (`plate_1.gcode`)
 
 1. **Start G-code** from the first plate (homing, heating, bed leveling)
 2. For each plate in the queue:
-   - Swap sequence (bed clearing, plate change commands)
    - The plate's G-code (print moves)
-3. **End G-code** from the last plate (cooldown, parking)
+   - Swap sequence (bed clearing, plate change commands)
+3. **End G-code** from the last plate (motor shutdown, parking)
+
+On the last plate the order is: print → plate swap → finish block (FIN). The plate is swapped **before** the motors are disabled, so you can remove the finished print.
 
 ### Swap sequence between plates
 

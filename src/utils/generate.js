@@ -102,10 +102,15 @@ export async function generateSwap(originalZip, plates, loopRepeats, outputName,
     await check();
   }
 
-  // ── 3. Append DO_SWAP to each entry ──────────────────────────────────────
+  // ── 3. Insert DO_SWAP into each entry (before FIN block if present) ─────
   report(30, 'processing');
   for (let i = 0; i < gcodeEntries.length; i++) {
-    gcodeEntries[i] += DO_SWAP;
+    const finIdx = gcodeEntries[i].indexOf(';===START: FIN===');
+    if (finIdx !== -1) {
+      gcodeEntries[i] = gcodeEntries[i].slice(0, finIdx) + DO_SWAP + gcodeEntries[i].slice(finIdx);
+    } else {
+      gcodeEntries[i] += DO_SWAP;
+    }
   }
 
   // ── 4. Loop the array ────────────────────────────────────────────────────
