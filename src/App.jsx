@@ -190,8 +190,6 @@ export default function App() {
   const stats = computeStats(activePlates, loopRepeats);
   const hasPlates = plates.length > 0;
 
-  const codeClass = 'font-mono bg-surface-2 px-[5px] py-px rounded-[3px] text-[0.78rem] text-accent';
-
   return (
     <div className="min-h-screen flex flex-col bg-bg text-text">
       <Toaster

@@ -14,7 +14,7 @@
   --color-muted: #666666;
   --color-border: #2a2a2a;
   --color-error: #ff6b6b;
-  --font-body: 'Syne', sans-serif;
+  --font-body: monospace, 'JetBrains Mono';
   --font-mono: 'JetBrains Mono', monospace;
 }
 

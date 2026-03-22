@@ -28,7 +28,7 @@ export default function GuideModal({ open, onClose }) {
       onClick={onClose}
     >
       <div
-        className="bg-surface border border-border rounded-[14px] w-[90vw] max-w-[720px] max-h-[85vh] flex flex-col shadow-2xl"
+        className="bg-surface border border-border rounded-[14px] w-[90vw] max-w-[920px] max-h-[85vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

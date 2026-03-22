@@ -77,8 +77,8 @@ export default function PlateCard({ plate, onChange, loopRepeats }) {
               className="w-3 h-3 rounded-[3px] border border-white/15 shrink-0"
               style={{ background: normalizeColor(f.color) }}
             />
-            <span className="text-muted w-[38px] shrink-0">{t('card.slot', { n: f.id })}</span>
-            <span className="text-text-dim text-[0.72rem] w-[42px] shrink-0">{f.type}</span>
+            <span className="text-muted w-[42px] shrink-0">{t('card.slot', { n: f.id })}</span>
+            <span className="text-text-dim text-[0.72rem] w-[36px] shrink-0">{f.type}</span>
             <span className="font-mono text-text-dim text-[0.75rem]">
               {f.usedM.toFixed(2)}m / {f.usedG.toFixed(2)}g
             </span>
