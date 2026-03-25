@@ -72,10 +72,15 @@ const MODEL_SETTINGS_TEMPLATE =
  * injected between them.
  */
 export async function generateSwap(originalZip, plates, loopRepeats, outputName, coverPlate, opts = {}) {
-  const { disableMechModeCheck = false, disableMechModeCheckAll = false, disableDynamicFlow = false, onProgress, controller } = opts;
+  const { disableMechModeCheck = false, disableMechModeCheckAll = false, disableDynamicFlow = false, express = false, onProgress, controller } = opts;
   const loop = Math.max(1, loopRepeats);
   const report = (pct, step) => onProgress?.(Math.round(pct), step);
   const check = () => controller?.checkpoint() ?? Promise.resolve();
+
+  // ── Express mode: process each plate individually, keep original archive ──
+  if (express) {
+    return generateExpressInPlace(originalZip, plates, { onProgress: report, check });
+  }
 
   report(0, 'reading');
 
@@ -216,6 +221,92 @@ export async function generateSwap(originalZip, plates, loopRepeats, outputName,
   );
   report(100, 'done');
   return result;
+}
+
+// ── Express in-place ─────────────────────────────────────────────────────────
+
+/**
+ * Express mode: process each plate's gcode individually (STARTER_SWAP, DO_SWAP,
+ * MMFC, DFC, FIN), recalculate MD5, and pack back into a clone of the original
+ * archive — keeping all other files (3D models, thumbnails, metadata) untouched.
+ */
+async function generateExpressInPlace(originalZip, plates, { onProgress: report, check }) {
+  report(0, 'reading');
+
+  // ── 1. Copy all non-gcode files from the original archive ─────────────
+  const newZip = new JSZip();
+  const gcodePathRegex = /^Metadata\/[Pp]late_\d+\.gcode(\.3mf|\.md5)?$/i;
+
+  for (const [path, entry] of Object.entries(originalZip.files)) {
+    if (entry.dir) continue;
+    if (gcodePathRegex.test(path)) continue;
+    newZip.file(path, await entry.async('uint8array'));
+  }
+
+  report(10, 'processing');
+
+  // ── 2. Process each plate's gcode individually ────────────────────────
+  for (let i = 0; i < plates.length; i++) {
+    const plate = plates[i];
+    const zip = plate.zip || originalZip;
+    const gcodePath = findGcodePath(zip, plate);
+    let gcode = await zip.file(gcodePath).async('string');
+
+    await check();
+
+    // Insert DO_SWAP before FIN block (or at the end)
+    const finIdx = gcode.indexOf(';===START: FIN===');
+    if (finIdx !== -1) {
+      gcode = gcode.slice(0, finIdx) + DO_SWAP + gcode.slice(finIdx);
+    } else {
+      gcode += DO_SWAP;
+    }
+
+    // Prepend STARTER_SWAP
+    gcode = STARTER_SWAP + gcode;
+
+    // AMS optimization (single-plate array)
+    const entries = [gcode];
+    optimizeAmsSwaps(entries);
+    gcode = entries[0];
+
+    // Build gcode blob + MD5
+    const pctBase = 10 + (i / plates.length) * 60;
+    const gcodeBlob = new Blob([gcode], { type: 'text/x-gcode' });
+    const md5Hash = await chunkedMd5(gcodeBlob, (p) => report(pctBase + p * (60 / plates.length), 'hashing'), check);
+
+    // Write processed gcode + md5 back to original path
+    newZip.file(gcodePath, gcodeBlob);
+    const md5Path = gcodePath.replace(/\.3mf$/i, '') + '.md5';
+    newZip.file(md5Path, md5Hash);
+
+    report(10 + ((i + 1) / plates.length) * 70, 'processing');
+    await check();
+  }
+
+  // ── 3. Generate ZIP blob ──────────────────────────────────────────────
+  report(85, 'packing');
+  const result = await newZip.generateAsync(
+    { type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 3 } },
+    (meta) => report(85 + meta.percent * 0.15, 'packing'),
+  );
+  report(100, 'done');
+  return result;
+}
+
+function findGcodePath(zip, plate) {
+  const origIdx = plate.index;
+  const variants = [
+    `Metadata/plate_${origIdx}.gcode`,
+    `Metadata/Plate_${origIdx}.gcode`,
+    `Metadata/plate_${origIdx}.gcode.3mf`,
+    `Metadata/Plate_${origIdx}.gcode.3mf`,
+    plate.fileName.includes('/') ? plate.fileName : `Metadata/${plate.fileName}`,
+  ];
+  for (const v of variants) {
+    if (zip.file(v)) return v;
+  }
+  throw new Error(`Gcode file not found for plate ${origIdx}`);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

@@ -18,6 +18,23 @@ import GuideModal from './components/GuideModal';
 
 const DEFAULT_LOOP = 1;
 
+function useLocalState(key, defaultValue) {
+  const [value, setValue] = useState(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      return stored !== null ? JSON.parse(stored) : defaultValue;
+    } catch { return defaultValue; }
+  });
+  const set = useCallback((v) => {
+    setValue((prev) => {
+      const next = typeof v === 'function' ? v(prev) : v;
+      localStorage.setItem(key, JSON.stringify(next));
+      return next;
+    });
+  }, [key]);
+  return [value, set];
+}
+
 export default function App() {
   const { t } = useI18n();
   const { theme } = useTheme();
@@ -30,9 +47,9 @@ export default function App() {
   const [log, setLog] = useState([]);
   const [selectedPlateId, setSelectedPlateId] = useState(null);
   const [fileCount, setFileCount] = useState(0);
-  const [disableMechModeCheck, setDisableMechModeCheck] = useState(false);
-  const [disableMechModeCheckAll, setDisableMechModeCheckAll] = useState(false);
-  const [disableDynamicFlow, setDisableDynamicFlow] = useState(false);
+  const [disableMechModeCheck, setDisableMechModeCheck] = useLocalState('opt_mmfc', true);
+  const [disableMechModeCheckAll, setDisableMechModeCheckAll] = useLocalState('opt_mmfc_all', false);
+  const [disableDynamicFlow, setDisableDynamicFlow] = useLocalState('opt_dfc', true);
   const [guideOpen, setGuideOpen] = useState(false);
   const [progress, setProgress] = useState({ percent: 0, step: '' });
   const [paused, setPaused] = useState(false);
@@ -74,7 +91,7 @@ export default function App() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${name || 'output'}.swap.3mf`;
+      a.download = opts.express ? `${name || 'output'}.3mf` : `${name || 'output'}.swap.3mf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -135,7 +152,7 @@ export default function App() {
       setStatus({ type: 'ready', msg: '' });
 
       if (express && zip) {
-        await doGenerate(zip, newPlates, DEFAULT_LOOP, files[0].name.replace(/\.3mf$/i, ''));
+        await doGenerate(zip, newPlates, DEFAULT_LOOP, files[0].name.replace(/\.3mf$/i, ''), null, { express: true });
       }
     } catch (err) {
       const msg = err instanceof ParseError ? t(err.code, err.params) : err.message;
@@ -159,9 +176,6 @@ export default function App() {
     setLoopRepeats(DEFAULT_LOOP);
     setSelectedPlateId(null);
     setFileCount(0);
-    setDisableMechModeCheck(false);
-    setDisableMechModeCheckAll(false);
-    setDisableDynamicFlow(false);
     setStatus({ type: 'idle', msg: '' });
     addLog(t('log.reset'));
   };
