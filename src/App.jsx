@@ -91,7 +91,7 @@ export default function App() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = opts.express ? `${name || 'output'}.3mf` : `${name || 'output'}.swap.3mf`;
+      a.download = opts.express ? `${name || 'output'}.gcode.3mf` : `${name || 'output'}.swap.gcode.3mf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -144,7 +144,7 @@ export default function App() {
       setOriginalZip(zip);
 
       setCustomName((prev) => {
-        if (!prev) return files[0].name.replace(/\.3mf$/i, '');
+        if (!prev) return files[0].name.replace(/\.gcode\.3mf$/i, '').replace(/\.3mf$/i, '');
         return 'mix';
       });
 
@@ -152,7 +152,7 @@ export default function App() {
       setStatus({ type: 'ready', msg: '' });
 
       if (express && zip) {
-        await doGenerate(zip, newPlates, DEFAULT_LOOP, files[0].name.replace(/\.3mf$/i, ''), null, { express: true });
+        await doGenerate(zip, newPlates, DEFAULT_LOOP, files[0].name.replace(/\.gcode\.3mf$/i, '').replace(/\.3mf$/i, ''), null, { express: true });
       }
     } catch (err) {
       const msg = err instanceof ParseError ? t(err.code, err.params) : err.message;
@@ -304,7 +304,7 @@ export default function App() {
                   onChange={(e) => setCustomName(e.target.value)}
                   placeholder="output"
                 />
-                <span className="bg-surface text-muted font-mono text-[0.75rem] px-2 py-[7px] border-l border-border whitespace-nowrap">.swap.3mf</span>
+                <span className="bg-surface text-muted font-mono text-[0.75rem] px-2 py-[7px] border-l border-border whitespace-nowrap">.swap.gcode.3mf</span>
               </div>
             </div>
 

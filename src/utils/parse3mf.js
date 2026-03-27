@@ -116,6 +116,16 @@ export async function parse3mf(file) {
       }
     }
 
+    // Parse objects (for slice_info reconstruction)
+    const objects = [];
+    plateEl.querySelectorAll('object').forEach((obj) => {
+      objects.push({
+        identifyId: obj.getAttribute('identify_id') ?? '',
+        name: obj.getAttribute('name') ?? '',
+        skipped: obj.getAttribute('skipped') ?? 'false',
+      });
+    });
+
     // Load thumbnail blob URL
     const thumbnailUrl = await loadThumbnail(zip, index, getMeta);
 
@@ -128,6 +138,7 @@ export async function parse3mf(file) {
       nozzleDiameters,
       plateName,
       filaments,
+      objects,
       repeats: 1,
       thumbnailUrl,
       zip,
